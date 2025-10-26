@@ -419,14 +419,14 @@ function App() {
     );
     
     // Convert content to bytes
-    let contentBytes: Uint8Array;
+    let contentBytes: BufferSource;
     if (typeof content === 'string') {
       // Text content
       const encoder = new TextEncoder();
       contentBytes = encoder.encode(content);
     } else {
       // Binary content (ArrayBuffer from image/pdf/zip etc)
-      contentBytes = new Uint8Array(content);
+      contentBytes = content;
     }
     
     // Encrypt
@@ -648,7 +648,7 @@ function App() {
     // Import AES key
     const cryptoKey = await window.crypto.subtle.importKey(
       'raw',
-      key,
+      key.buffer as ArrayBuffer,
       { name: 'AES-CBC' },
       false,
       ['decrypt']
@@ -661,7 +661,7 @@ function App() {
     
     // Decrypt
     const decryptedBuffer = await window.crypto.subtle.decrypt(
-      { name: 'AES-CBC', iv },
+      { name: 'AES-CBC', iv: iv.buffer as ArrayBuffer },
       cryptoKey,
       encryptedBytes
     );
