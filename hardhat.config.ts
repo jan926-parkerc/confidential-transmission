@@ -11,11 +11,34 @@ import "solidity-coverage";
 
 import "./tasks/accounts";
 import "./tasks/FHECounter";
+import "./tasks/ConfidentialTransmission";
 
 // Run 'npx hardhat vars setup' to see the list of variables that need to be set
 
+// Support multiple PRIVATE_KEYs or MNEMONIC
+const PRIVATE_KEY: string = vars.get("PRIVATE_KEY", "");
+const PRIVATE_KEYB: string = vars.get("PRIVATE_KEYB", "");
+const PRIVATE_KEYA: string = vars.get("PRIVATE_KEYA", "");
 const MNEMONIC: string = vars.get("MNEMONIC", "test test test test test test test test test test test junk");
 const INFURA_API_KEY: string = vars.get("INFURA_API_KEY", "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
+
+// Helper function to get accounts configuration
+function getAccounts() {
+  // If multiple private keys are provided, use them
+  if (PRIVATE_KEY && PRIVATE_KEYB && PRIVATE_KEYA) {
+    return [PRIVATE_KEY, PRIVATE_KEYB, PRIVATE_KEYA];
+  }
+  // If only PRIVATE_KEY is provided, use it alone
+  if (PRIVATE_KEY) {
+    return [PRIVATE_KEY];
+  }
+  // Otherwise use MNEMONIC
+  return {
+    mnemonic: MNEMONIC,
+    path: "m/44'/60'/0'/0/",
+    count: 10,
+  };
+}
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
@@ -34,26 +57,18 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {
-      accounts: {
-        mnemonic: MNEMONIC,
-      },
+      accounts: PRIVATE_KEY
+        ? [{ privateKey: PRIVATE_KEY, balance: "10000000000000000000000" }]
+        : { mnemonic: MNEMONIC },
       chainId: 31337,
     },
     anvil: {
-      accounts: {
-        mnemonic: MNEMONIC,
-        path: "m/44'/60'/0'/0/",
-        count: 10,
-      },
+      accounts: getAccounts(),
       chainId: 31337,
       url: "http://localhost:8545",
     },
     sepolia: {
-      accounts: {
-        mnemonic: MNEMONIC,
-        path: "m/44'/60'/0'/0/",
-        count: 10,
-      },
+      accounts: getAccounts(),
       chainId: 11155111,
       url: `https://sepolia.infura.io/v3/${INFURA_API_KEY}`,
     },

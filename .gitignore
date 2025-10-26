@@ -1,25 +1,58 @@
-# fhevm
-fhevmTemp
+# Dependencies
+node_modules/
+package-lock.json
 
-# directories
-.coverage_artifacts
-.coverage_cache
-.coverage_contracts
-artifacts
-build
-cache
-coverage
-dist
-node_modules
-types
-deployments
-tmp
-
-# files
-*.env
-*.log
-.DS_Store
-.pnp.*
+# Build outputs
+artifacts/
+cache/
+dist/
+coverage/
 coverage.json
-pnpm-lock.yaml
-yarn.lock
+types/
+fhevmTemp/
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.test
+
+# Hardhat files
+deployments/localhost/
+deployments/hardhat/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files
+*.encrypted
+*.decrypted
+test-*.txt
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Frontend specific
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/abi/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# IPFS
+.ipfs/
