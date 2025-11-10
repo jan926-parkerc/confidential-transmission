@@ -361,19 +361,18 @@ export const NETWORK_CONFIG = {
     chainId: 11155111,
     chainIdHex: '0xaa36a7',
     name: 'Sepolia',
-    rpcUrl: 'https://rpc.sepolia.org', // 公共 RPC，无需 API Key
+    rpcUrl: 'https://sepolia.infura.io/v3/19f36f1ce2dd4421867d9df68471c202', //
     blockExplorer: 'https://sepolia.etherscan.io'
   }
 };
 
-// FHEVM Configuration (Zama) - Sepolia 配置
-// SDK 通过 UMD 方式在 index.html 中加载 (window.zamaRelayerSDK)
+
 export const FHEVM_CONFIG = {
-  networkUrl: 'https://rpc.sepolia.org', // Sepolia RPC
-  gatewayUrl: '', // Sepolia 使用默认 gateway（可选）
+  networkUrl: 'https://sepolia.infura.io/v3/19f36f1ce2dd4421867d9df68471c202', // Sepolia Infura RPC
+  gatewayUrl: '', // Sepolia 
 };
 
-// IPFS Configuration (Pinata) - 从环境变量读取
+// IPFS Configuration (Pinata) - 
 export const IPFS_CONFIG = {
   pinataApiKey: import.meta.env.VITE_PINATA_API_KEY || '',
   pinataSecretKey: import.meta.env.VITE_PINATA_SECRET_KEY || '',

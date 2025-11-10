@@ -58,6 +58,67 @@ declare global {
  * - Only recipient can decrypt
  */
 
+const OVERRIDE_TARGETS = [
+  'https://eth-sepolia.public.blastapi.io',
+  'https://eth-sepolia.public.blastapi.io/',
+  'https://eth-sepolia.blastapi.io',
+  'https://eth-sepolia.blastapi.io/',
+];
+
+type RestoreFetch = () => void;
+
+const overrideSdkFetchRpc = (replacementUrl: string): RestoreFetch => {
+  const originalFetch = window.fetch.bind(window);
+
+  const shouldRedirect = (url: string | URL) => {
+    const urlString = typeof url === 'string' ? url : url.toString();
+    return OVERRIDE_TARGETS.some((target) => urlString.startsWith(target));
+  };
+
+  window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    let requestUrl: string | URL | undefined;
+
+    if (typeof input === 'string' || input instanceof URL) {
+      requestUrl = input;
+    } else if (input instanceof Request) {
+      requestUrl = input.url;
+    }
+
+    if (requestUrl && shouldRedirect(requestUrl)) {
+      if (input instanceof Request) {
+        const newRequest = new Request(replacementUrl, {
+          method: input.method,
+          headers: input.headers,
+          body: input.body,
+          mode: input.mode,
+          credentials: input.credentials,
+          cache: input.cache,
+          redirect: input.redirect,
+          referrer: input.referrer,
+          referrerPolicy: input.referrerPolicy,
+          integrity: input.integrity,
+          keepalive: input.keepalive,
+          signal: input.signal,
+        });
+        return originalFetch(newRequest, init);
+      }
+
+      if (typeof input === 'string' || input instanceof URL) {
+        return originalFetch(replacementUrl, init);
+      }
+
+      console.warn('Unknown fetch input type; forcing replacement URL.');
+      return originalFetch(replacementUrl, init);
+    }
+
+    return originalFetch(input as any, init);
+  }) as typeof window.fetch;
+
+  return () => {
+    window.fetch = originalFetch;
+  };
+};
+
 interface Message {
   id: number;
   recipient: string;
@@ -238,16 +299,40 @@ function App() {
         // Initialize WASM
         await sdk.initSDK();
         
-        // Use SDK built-in SepoliaConfig (includes KMS address)
-        const config = sdk.SepoliaConfig || {
-          networkUrl: FHEVM_CONFIG.networkUrl,
-          gatewayUrl: FHEVM_CONFIG.gatewayUrl || undefined,
+        // Build config overriding default SDK endpoints with our settings
+        const defaultConfig = sdk.SepoliaConfig ?? {};
+        const infuraRpc = FHEVM_CONFIG.networkUrl || defaultConfig.networkUrl;
+        const config = {
+          ...defaultConfig,
+          // Force SDK to use our Infura RPC everywhere
+          networkUrl: infuraRpc,
+          rpcUrl: infuraRpc,
+          network: infuraRpc,
+          gatewayUrl: FHEVM_CONFIG.gatewayUrl || defaultConfig.gatewayUrl,
+          networkConfig: {
+            ...(defaultConfig.networkConfig ?? {}),
+            urls: {
+              ...(defaultConfig.networkConfig?.urls ?? {}),
+              default: infuraRpc,
+              rpc: infuraRpc,
+              public: infuraRpc,
+            },
+          },
+          nodeConfig: {
+            ...(defaultConfig.nodeConfig ?? {}),
+            url: infuraRpc,
+          },
         };
         
         // Create FHEVM instance
-        const fheInstance = await sdk.createInstance(config);
-        setFhevmInstance(fheInstance);
-        setSdkStatus('success');
+        const restoreFetch = overrideSdkFetchRpc(infuraRpc);
+        try {
+          const fheInstance = await sdk.createInstance(config);
+          setFhevmInstance(fheInstance);
+          setSdkStatus('success');
+        } finally {
+          restoreFetch();
+        }
         
       } catch (fheError) {
         console.error('❌ FHEVM SDK initialization failed:', fheError);
